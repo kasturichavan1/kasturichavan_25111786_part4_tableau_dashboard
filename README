@@ -1,0 +1,58 @@
+# Executive Sales Dashboard — Part 4
+
+## 1. Business Problem Summary
+Acting as a business analyst for a retail leadership team, the goal of this project is to build a Tableau executive dashboard that monitors sales performance, profitability, customer segments, category performance, shipping performance, discount impact, and return patterns — surfacing the business risks and opportunities hidden in the raw order data, rather than presenting an unconnected set of charts.
+
+## 2. Dataset Description
+- **File:** `data/dashboard_sales_data.xlsx`
+- **Size:** 4,200 orders, 20 columns, covering Jan 2024 – Dec 2025
+- **Coverage:** 4 regions, 19 states, 3 customer segments (Consumer, Corporate, Home Office), 3 product categories / 13 sub-categories, 4 shipping modes, 5 campaign channels
+- **Key fields:** order/ship dates, customer segment, region/state/city, category/sub-category/product, ship mode, sales, quantity, discount, profit, return flag, delivery days, customer rating, campaign channel
+- **Data quality notes:** `customer_rating` has 32 missing values and `campaign_channel` has 24 missing values (both under 1% of records); no duplicate order IDs; no other missing values found.
+
+## 3. Tableau Workbook Description
+- **File:** `tableau/executive_dashboard.twbx`
+- Contains 7 supporting worksheets (Sales Trend, Regional Performance, Category Profitability, Customer Segment, Shipping Performance, Discount vs Profit, Return Analysis) plus one combined Executive Dashboard.
+- Built directly on `dashboard_sales_data.xlsx` as a single data source — no blends or joins required.
+
+## 4. Calculated Fields Created
+| Field | Logic |
+|---|---|
+| Profit Margin | `SUM([Profit]) / SUM([Sales])` |
+| Cost | `[Sales] - [Profit]` |
+| Average Order Value | `SUM([Sales]) / COUNTD([Order ID])` |
+| Return Rate | `SUM([Return Flag]) / COUNTD([Order ID])` |
+| Shipping Delay Bucket | Buckets `Delivery Days` into Fast / Standard / Slow / Very Slow |
+| Discount Tier *(extra)* | Buckets `Discount` into No Discount / Low / Medium / High |
+| Order Outcome *(extra)* | Flags each order as Profitable or Loss |
+
+Full explanations are in `outputs/business_insights.md`.
+
+## 5. Dashboard Components
+- **KPI cards:** Total Sales, Total Profit, Profit Margin, Return Rate
+- **Charts:** Sales Trend (line), Regional Performance (bar), Category Profitability (bar), Customer Segment (highlight table), Shipping Performance (bar), Discount vs Profit (scatter), Return Analysis (bar)
+- **Layout:** Tiled grid — KPI row on top, supporting charts below — with a consistent color palette for Region and Category reused across every chart.
+
+## 6. Filters and Interactions Used
+- **Dashboard-wide filters:** Region, Category, Customer Segment (applied via "Apply to Worksheets > All Using This Data Source")
+- **Action filter:** Selecting a bar on the Category Profitability chart filters every other chart on the dashboard — lets leadership drill from "what's underperforming" into "where does this show up everywhere."
+
+## 7. Key Business Insights
+Full detail with data evidence and recommended actions is in `outputs/business_insights.md`. Headlines:
+- Technology drives 71% of sales at an 18.2% margin — the strongest category.
+- Furniture brings in ₹5.16 Cr in sales but only a 6.9% margin (less than half the company average) and the dataset's highest return rates.
+- Discounts of 25%+ are responsible for 87% of all loss-making orders; profit margin turns negative beyond ~30% discount.
+- Home Office is the largest segment by sales but has a 45% higher return rate than Consumer or Corporate.
+- The Organic acquisition channel drives 40% of all orders at a healthy margin and the second-highest order value — outperforming Paid traffic with zero acquisition spend.
+- Rajasthan alone contributes 38% of the North region's sales; Jharkhand, Karnataka, and Haryana post the highest state-level margins.
+
+## 8. Dashboard Story Summary
+The business is healthy overall (15.35% margin across ₹21.70 Cr in sales) but carries one concentrated, fixable risk — Furniture being discounted past the point of profitability — alongside one clear, underused opportunity in the Organic channel. Full narrative, including risks, opportunities, recommended actions, and limitations, is in `outputs/dashboard_story.md`.
+
+## 9. Assumptions and Limitations
+- Currency values are treated as a single consistent currency unit (likely INR, given the Indian states/cities in the dataset); no currency symbol is encoded in the raw data, so this is an assumption rather than a confirmed fact.
+- `delivery_days` was verified to exactly match `ship_date - order_date` for every record, so no adjustment was needed.
+- Profit figures reflect the original sale only; they do not net out return-processing costs, so high-return categories/segments (Furniture, Home Office) are likely less profitable in practice than the raw numbers suggest.
+- Rows with missing `campaign_channel` or `customer_rating` (under 1% of records) were left as-is (not imputed) since the volume is too small to materially affect any conclusion.
+- The dataset has no unit-cost or supplier field, so Furniture's margin problem cannot be separated into a pricing issue vs. a cost issue from this data alone.
+- Analysis is at the state level; city-level patterns were not explored.
